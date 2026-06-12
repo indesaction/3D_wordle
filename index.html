@@ -3,22 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Wordle Clone</title>
+<title>Wordle 3D</title>
 <style>
   :root {
-    --bg: #121213;
-    --tile-border: #3a3a3c;
-    --tile-border-active: #565758;
-    --text: #ffffff;
-    --green: #538d4e;
-    --yellow: #b59f3b;
-    --gray: #3a3a3c;
-    --key-bg: #818384;
+    --bg-top: #f5f3ef;
+    --bg-bottom: #e6e2da;
+    --text: #3b3a37;
+    --text-soft: #8a8780;
+    --green: #6aaa64;
+    --yellow: #e0a83c;
+    --gray: #b6b2a9;
+    --key-face: #ffffff;
+    --key-side: #d8d4cc;
+    --tile-face: #fbfaf7;
+    --tile-side: #d8d4cc;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
-    background: var(--bg);
+    background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
     color: var(--text);
     font-family: 'Helvetica Neue', Arial, sans-serif;
     display: flex;
@@ -31,14 +34,15 @@
     width: 100%;
     max-width: 500px;
     text-align: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--tile-border);
+    padding: 14px 0 10px;
   }
   header h1 {
-    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
     font-weight: 800;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
+    color: var(--text);
+    text-shadow: 0 1px 0 #fff, 0 3px 6px rgba(0,0,0,0.12);
   }
   #game {
     flex: 1;
@@ -48,23 +52,32 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 8px;
+    padding: 6px 8px 0;
+    perspective: 900px;
   }
-  /* Board */
+  /* ---------- 3D Board ---------- */
+  #board-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+  }
   #board {
     display: grid;
     grid-template-rows: repeat(6, 1fr);
-    gap: 5px;
-    flex: 1;
-    max-height: 420px;
+    gap: 7px;
+    max-height: 400px;
     aspect-ratio: 5 / 6;
-    margin: 8px 0;
-    width: auto;
+    margin: 6px 0;
+    transform: rotateX(6deg);
+    transform-style: preserve-3d;
   }
   .row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
+    gap: 7px;
+    transform-style: preserve-3d;
   }
   .row.shake { animation: shake 0.5s; }
   @keyframes shake {
@@ -75,95 +88,143 @@
   }
   .tile {
     aspect-ratio: 1;
-    border: 2px solid var(--tile-border);
+    border-radius: 10px;
+    background: var(--tile-face);
+    box-shadow:
+      0 4px 0 var(--tile-side),
+      0 8px 14px rgba(60, 55, 45, 0.18),
+      inset 0 1px 0 #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(1.2rem, 6vw, 2rem);
+    font-size: clamp(1.2rem, 6vw, 1.9rem);
     font-weight: 800;
     text-transform: uppercase;
+    color: var(--text);
     user-select: none;
-    transition: border-color 0.1s;
+    transform-style: preserve-3d;
   }
-  .tile.filled {
-    border-color: var(--tile-border-active);
-    animation: pop 0.1s;
-  }
+  .tile.filled { animation: pop 0.12s; }
   @keyframes pop {
-    50% { transform: scale(1.1); }
+    50% { transform: scale(1.08) translateZ(8px); }
   }
-  .tile.flip { animation: flip 0.5s ease forwards; }
+  .tile.flip { animation: flip 0.55s ease forwards; }
   @keyframes flip {
     0% { transform: rotateX(0); }
     50% { transform: rotateX(90deg); }
     100% { transform: rotateX(0); }
   }
-  .tile.correct { background: var(--green); border-color: var(--green); }
-  .tile.present { background: var(--yellow); border-color: var(--yellow); }
-  .tile.absent  { background: var(--gray); border-color: var(--gray); }
+  .tile.correct {
+    background: var(--green);
+    color: #fff;
+    box-shadow: 0 4px 0 #527e4d, 0 8px 14px rgba(82,126,77,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .tile.present {
+    background: var(--yellow);
+    color: #fff;
+    box-shadow: 0 4px 0 #b3852f, 0 8px 14px rgba(179,133,47,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .tile.absent {
+    background: var(--gray);
+    color: #fff;
+    box-shadow: 0 4px 0 #94908a, 0 8px 14px rgba(60,55,45,0.18), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
   .tile.win { animation: bounce 0.6s ease; }
   @keyframes bounce {
     0%, 100% { transform: translateY(0); }
     35% { transform: translateY(-18px); }
     65% { transform: translateY(4px); }
   }
-  /* Keyboard */
+  /* ---------- 3D White Keyboard ---------- */
   #keyboard {
     width: 100%;
-    padding-bottom: 8px;
+    padding: 10px 2px 16px;
     user-select: none;
+    transform: rotateX(8deg);
+    transform-style: preserve-3d;
   }
   .kb-row {
     display: flex;
     justify-content: center;
-    gap: 5px;
-    margin-bottom: 6px;
+    gap: 6px;
+    margin-bottom: 9px;
   }
   .key {
     flex: 1;
     max-width: 44px;
-    height: 54px;
-    background: var(--key-bg);
+    height: 52px;
+    background: linear-gradient(180deg, #ffffff, #f3f1ec);
     border: none;
-    border-radius: 5px;
+    border-radius: 9px;
     color: var(--text);
     font-size: clamp(0.8rem, 3.2vw, 1rem);
     font-weight: 700;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.15s, transform 0.05s;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow:
+      0 5px 0 var(--key-side),
+      0 9px 14px rgba(60, 55, 45, 0.22),
+      inset 0 1px 0 #ffffff;
+    transition: background 0.15s, box-shadow 0.08s, transform 0.08s;
   }
-  .key:active { transform: scale(0.93); filter: brightness(1.2); }
-  .key.wide { max-width: 70px; flex: 1.6; font-size: 0.7rem; }
-  .key.correct { background: var(--green); }
-  .key.present { background: var(--yellow); }
-  .key.absent  { background: var(--gray); }
-  /* Toast */
+  .key:active {
+    transform: translateY(4px);
+    box-shadow:
+      0 1px 0 var(--key-side),
+      0 3px 6px rgba(60, 55, 45, 0.2),
+      inset 0 1px 0 #ffffff;
+  }
+  .key.wide { max-width: 70px; flex: 1.6; font-size: 0.68rem; }
+  .key.correct {
+    background: linear-gradient(180deg, #7cbb75, var(--green));
+    color: #fff;
+    box-shadow: 0 5px 0 #527e4d, 0 9px 14px rgba(82,126,77,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .key.present {
+    background: linear-gradient(180deg, #ecb851, var(--yellow));
+    color: #fff;
+    box-shadow: 0 5px 0 #b3852f, 0 9px 14px rgba(179,133,47,0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .key.absent {
+    background: linear-gradient(180deg, #c2beb5, var(--gray));
+    color: #fff;
+    box-shadow: 0 5px 0 #94908a, 0 9px 14px rgba(60,55,45,0.18), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  /* ---------- Particle canvas ---------- */
+  #fx {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 60;
+  }
+  /* ---------- Toast ---------- */
   #toast {
     position: fixed;
     top: 70px;
     left: 50%;
     transform: translateX(-50%);
-    background: #fff;
-    color: #121213;
+    background: #3b3a37;
+    color: #fff;
     font-weight: 700;
     padding: 12px 18px;
-    border-radius: 8px;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s;
-    z-index: 50;
+    z-index: 70;
     white-space: nowrap;
   }
   #toast.show { opacity: 1; }
-  /* Modal */
+  /* ---------- Modal ---------- */
   #modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(60, 55, 45, 0.35);
+    backdrop-filter: blur(3px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -171,21 +232,21 @@
   }
   #modal-overlay.show { display: flex; }
   #modal {
-    background: #1d1d1f;
-    border: 1px solid var(--tile-border);
-    border-radius: 14px;
-    padding: 32px 28px;
+    background: linear-gradient(180deg, #ffffff, #f5f3ef);
+    border-radius: 18px;
+    padding: 34px 30px;
     text-align: center;
     max-width: 320px;
     width: 88%;
+    box-shadow: 0 10px 0 #d8d4cc, 0 24px 40px rgba(60,55,45,0.3);
     animation: modalIn 0.3s ease;
   }
   @keyframes modalIn {
     from { transform: translateY(24px) scale(0.95); opacity: 0; }
     to { transform: translateY(0) scale(1); opacity: 1; }
   }
-  #modal h2 { font-size: 1.6rem; margin-bottom: 8px; }
-  #modal p { color: #aaa; margin-bottom: 6px; line-height: 1.45; }
+  #modal h2 { font-size: 1.6rem; margin-bottom: 8px; color: var(--text); }
+  #modal p { color: var(--text-soft); margin-bottom: 6px; line-height: 1.45; }
   #modal .answer {
     display: inline-block;
     margin: 10px 0 18px;
@@ -193,33 +254,37 @@
     font-weight: 800;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--green);
+    color: var(--yellow);
   }
   #play-again {
-    background: var(--green);
+    background: linear-gradient(180deg, #ecb851, var(--yellow));
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 14px 34px;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    transition: filter 0.15s, transform 0.05s;
+    box-shadow: 0 5px 0 #b3852f, 0 10px 18px rgba(179,133,47,0.35);
+    transition: transform 0.08s, box-shadow 0.08s;
   }
-  #play-again:hover { filter: brightness(1.15); }
-  #play-again:active { transform: scale(0.96); }
+  #play-again:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #b3852f, 0 4px 8px rgba(179,133,47,0.3);
+  }
 </style>
 </head>
 <body>
 <header><h1>Wordle</h1></header>
 
 <div id="game">
-  <div id="board"></div>
+  <div id="board-wrap"><div id="board"></div></div>
   <div id="keyboard"></div>
 </div>
 
+<canvas id="fx"></canvas>
 <div id="toast"></div>
 
 <div id="modal-overlay">
@@ -247,6 +312,77 @@
   const kbEl = document.getElementById("keyboard");
   const toastEl = document.getElementById("toast");
   const overlayEl = document.getElementById("modal-overlay");
+
+  // ---------- Particle system ----------
+  const canvas = document.getElementById("fx");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+  let fxRunning = false;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth * devicePixelRatio;
+    canvas.height = window.innerHeight * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  const WARM = ["#ffb347", "#ffcc33", "#ff9a1f", "#ffd966", "#f5a623"]; // orange/yellow
+  const RED  = ["#e74c3c", "#ff6b5b", "#c0392b", "#ff8a80", "#d64533"]; // red
+
+  function burst(x, y, palette, count = 16, power = 1) {
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = (1.5 + Math.random() * 3.5) * power;
+      particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 1.5 * power,
+        size: 2 + Math.random() * 4,
+        life: 1,
+        decay: 0.018 + Math.random() * 0.02,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        spin: (Math.random() - 0.5) * 0.3,
+        rot: Math.random() * Math.PI,
+        shape: Math.random() < 0.5 ? "rect" : "circle"
+      });
+    }
+    if (!fxRunning) { fxRunning = true; requestAnimationFrame(fxLoop); }
+  }
+
+  function burstAtEl(el, palette, count, power) {
+    const r = el.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height / 2, palette, count, power);
+  }
+
+  function fxLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter(p => p.life > 0);
+    if (particles.length === 0) { fxRunning = false; return; }
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.12;        // gravity
+      p.vx *= 0.99;
+      p.rot += p.spin;
+      p.life -= p.decay;
+      ctx.globalAlpha = Math.max(p.life, 0);
+      ctx.fillStyle = p.color;
+      if (p.shape === "rect") {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(fxLoop);
+  }
 
   // ---------- Build board ----------
   function buildBoard() {
@@ -294,6 +430,7 @@
     curRow = 0; curCol = 0;
     gameOver = false; animating = false;
     overlayEl.classList.remove("show");
+    particles = [];
     buildBoard();
     buildKeyboard();
   }
@@ -316,6 +453,8 @@
       const t = tile(curRow, curCol);
       t.textContent = key;
       t.classList.add("filled");
+      // warm spark on every typed letter
+      burstAtEl(t, WARM, 8, 0.6);
       curCol++;
     }
   }
@@ -333,7 +472,11 @@
       const t = tile(rowIdx, c);
       setTimeout(() => {
         t.classList.add("flip");
-        setTimeout(() => t.classList.add(state), 250); // mid-flip color swap
+        setTimeout(() => {
+          t.classList.add(state);
+          // orange/yellow burst as each guessed letter reveals
+          burstAtEl(t, WARM, 14, 1);
+        }, 250); // mid-flip color swap
       }, c * FLIP_TIME);
     });
 
@@ -342,9 +485,12 @@
       animating = false;
       if (guess === answer) {
         gameOver = true;
-        // bounce winning tiles
         for (let c = 0; c < COLS; c++) {
-          setTimeout(() => tile(rowIdx, c).classList.add("win"), c * 80);
+          setTimeout(() => {
+            const t = tile(rowIdx, c);
+            t.classList.add("win");
+            burstAtEl(t, WARM, 22, 1.4);
+          }, c * 80);
         }
         const praise = ["Genius!", "Magnificent!", "Impressive!", "Splendid!", "Great!", "Phew!"][rowIdx];
         setTimeout(() => showModal(true, praise), 900);
@@ -380,6 +526,10 @@
     rowEl.classList.remove("shake");
     void rowEl.offsetWidth; // restart animation
     rowEl.classList.add("shake");
+    // red particle bursts on every tile of the rejected row
+    for (let c = 0; c < COLS; c++) {
+      burstAtEl(tile(curRow, c), RED, 12, 1);
+    }
   }
 
   // ---------- UI helpers ----------
